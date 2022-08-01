@@ -6,6 +6,7 @@ import pathlib
 import subprocess
 import tempfile
 import datetime
+import shutil
 
 
 def cyclic_resolution(frame_number: int, res: int) -> int:
@@ -112,8 +113,21 @@ def ffmpeg_concat(vid_list: pathlib.Path, orig_vid: pathlib.Path):
         raise ChildProcessError('ffmpeg returned an error') from e
 
 
+def check_ff():
+    probe = shutil.which('ffprobe') is None
+    mpeg = shutil.which('ffmpeg') is None
+    names = []
+    if probe:
+        names.append('ffprobe')
+    if mpeg:
+        names.append('ffmpeg')
+    if len(names) > 0:
+        sys.exit(f'Error: {" and ".join(names)} not found')
+
+
 def main_func():
     random.seed(datetime.datetime.now().timestamp())
+    check_ff()
     try:
         vid_path = pathlib.Path(sys.argv[1])
     except IndexError:
