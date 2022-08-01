@@ -117,12 +117,9 @@ def main_func():
     try:
         vid_path = pathlib.Path(sys.argv[1])
     except IndexError:
-        print('Error: No file provided.', file=sys.stderr)
-        sys.exit(1)
+        sys.exit('Error: No file provided')
     if not vid_path.is_file():
-        print(f'Error: {str(vid_path)} is not a valid file.',
-              file=sys.stderr)
-        sys.exit(1)
+        sys.exit(f'Error: {str(vid_path)} is not a valid file')
     with tempfile.TemporaryDirectory() as td:
         temp = pathlib.Path(td)
         vinfo = vid_info(ffprobe(vid_path))
