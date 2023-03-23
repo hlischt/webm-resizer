@@ -145,25 +145,27 @@ def check_infile(path: str) -> pathlib.Path:
 
 
 def process_video(vid_path: pathlib.Path, temp_dir: str) -> None:
+    print(f'Getting resolution/framerate from {vid_path}...', file=sys.stderr)
     temp = pathlib.Path(temp_dir)
     vinfo = vid_info(vid_path)
-    print(f'Creating PNG sequence as {temp / "%05d.png"}...',
-          file=sys.stderr, end='')
+    print(f'Creating PNG sequence as {temp / "%05d.png"}...', file=sys.stderr)
     ffmpeg_dump_frames(vid_path, temp / '%05d.png', vinfo['fps'])
-    print(' Done.', file=sys.stderr)
     pngs = sorted(temp.glob('./*.png'))
     webms = []
     concat_list = ''
-    print('Converting PNG images to webm...',
-          file=sys.stderr, end='')
-    shrink_func = shrink(len(pngs))
+    print('Converting PNG images to webm...', file=sys.stderr)
+    png_n = len(pngs)
+    shrink_func = shrink(png_n)
     for idx, i in enumerate(pngs):
+        print('\r\033[0K', end='', file=sys.stderr, flush=True)
+        print(f'Processing frame {idx+1} of {png_n}', end='',
+              file=sys.stderr, flush=True)
         ffmpeg_img2webm(i, vinfo['res'], vinfo['fps'],
                         idx, shrink_func)
         i.unlink()
         concat_list += f'file {quote_file(i.with_suffix(".webm"))}\n'
         webms.append(i.with_suffix('.webm'))
-    print(' Done.', file=sys.stderr)
+    print('', file=sys.stderr)
     with open(temp / 'list.txt', 'w', encoding='utf-8') as f:
         f.write(concat_list)
     ffmpeg_concat(temp / 'list.txt', vid_path)
