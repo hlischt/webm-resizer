@@ -144,7 +144,35 @@ def check_infile(path: str) -> pathlib.Path:
     return vid_path
 
 
-def main_func():
+def process_video(vid_path: pathlib.Path, temp_dir: str) -> None:
+    temp = pathlib.Path(temp_dir)
+    vinfo = vid_info(vid_path)
+    print(f'Creating PNG sequence as {temp / "%05d.png"}...',
+          file=sys.stderr, end='')
+    ffmpeg_dump_frames(vid_path, temp / '%05d.png', vinfo['fps'])
+    print(' Done.', file=sys.stderr)
+    pngs = sorted(temp.glob('./*.png'))
+    webms = []
+    concat_list = ''
+    print('Converting PNG images to webm...',
+          file=sys.stderr, end='')
+    shrink_func = shrink(len(pngs))
+    for idx, i in enumerate(pngs):
+        ffmpeg_img2webm(i, vinfo['res'], vinfo['fps'],
+                        idx, shrink_func)
+        i.unlink()
+        concat_list += f'file {quote_file(i.with_suffix(".webm"))}\n'
+        webms.append(i.with_suffix('.webm'))
+    print(' Done.', file=sys.stderr)
+    with open(temp / 'list.txt', 'w', encoding='utf-8') as f:
+        f.write(concat_list)
+    ffmpeg_concat(temp / 'list.txt', vid_path)
+    print('Deleting temporary files...', file=sys.stderr)
+    for i in webms:
+        i.unlink()
+
+
+def main():
     random.seed(datetime.datetime.now().timestamp())
     check_ff()
     try:
@@ -152,34 +180,10 @@ def main_func():
     except IndexError:
         sys.exit('Error: No file provided')
     with tempfile.TemporaryDirectory() as td:
-        temp = pathlib.Path(td)
-        vinfo = vid_info(vid_path)
-        print(f'Creating PNG sequence as {temp / "%05d.png"}...',
-              file=sys.stderr, end='')
-        ffmpeg_dump_frames(vid_path, temp / '%05d.png', vinfo['fps'])
-        print(' Done.', file=sys.stderr)
-        pngs = sorted(temp.glob('./*.png'))
-        webms = []
-        concat_list = ''
-        print('Converting PNG images to webm...',
-              file=sys.stderr, end='')
-        shrink_func = shrink(len(pngs))
-        for idx, i in enumerate(pngs):
-            ffmpeg_img2webm(i, vinfo['res'], vinfo['fps'],
-                            idx, shrink_func)
-            i.unlink()
-            concat_list += f'file {quote_file(i.with_suffix(".webm"))}\n'
-            webms.append(i.with_suffix('.webm'))
-        print(' Done.', file=sys.stderr)
-        with open(temp / 'list.txt', 'w', encoding='utf-8') as f:
-            f.write(concat_list)
-        ffmpeg_concat(temp / 'list.txt', vid_path)
-        print('Deleting temporary files...', file=sys.stderr)
-        for i in webms:
-            i.unlink()
+        process_video(vid_path, td)
     print(f'Successfully encoded {vid_path.with_suffix(".out.webm")}',
           file=sys.stderr)
 
 
 if __name__ == '__main__':
-    main_func()
+    main()
