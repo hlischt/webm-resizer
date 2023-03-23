@@ -22,6 +22,14 @@ def random_slow(frame_number: int, res: int) -> int:
     return random.randint(2, 320)
 
 
+def random_closure(minimum: int, maximum: int, hold: int):
+    '''Create a random function that changes every `hold` number of frames.'''
+    def rndm(frame_number: int, res: int) -> int:
+        random.seed((frame_number//hold) * res)
+        return random.randint(minimum, maximum)
+    return rndm
+
+
 def shrink(until: int):
     return lambda frame_num, res: \
         math.ceil((until + 1 - frame_num) * res)/(until + 1)
