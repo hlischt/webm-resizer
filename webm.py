@@ -125,15 +125,20 @@ def check_ff():
         sys.exit(f'Error: {" and ".join(names)} not found')
 
 
+def check_infile(path: str) -> pathlib.Path:
+    vid_path = pathlib.Path(path)
+    if not vid_path.is_file():
+        sys.exit(f'Error: {str(vid_path)} is not a valid file')
+    return vid_path
+
+
 def main_func():
     random.seed(datetime.datetime.now().timestamp())
     check_ff()
     try:
-        vid_path = pathlib.Path(sys.argv[1])
+        vid_path = check_infile(sys.argv[1])
     except IndexError:
         sys.exit('Error: No file provided')
-    if not vid_path.is_file():
-        sys.exit(f'Error: {str(vid_path)} is not a valid file')
     with tempfile.TemporaryDirectory() as td:
         temp = pathlib.Path(td)
         vinfo = vid_info(ffprobe(vid_path))
