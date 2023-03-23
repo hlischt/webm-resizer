@@ -9,6 +9,11 @@ import datetime
 import shutil
 
 
+def dummy(frame_number: int, res: int) -> int:
+    '''Returns the original resolution, unchanged.'''
+    return res
+
+
 def cyclic_resolution(frame_number: int, res: int) -> int:
     return math.ceil((res/4) * math.cos(frame_number / math.pi) + (res/4)*3)
 
