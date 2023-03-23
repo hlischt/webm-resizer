@@ -115,7 +115,7 @@ def ffmpeg_concat(vid_list: pathlib.Path, orig_vid: pathlib.Path):
             '-safe', '0',
             '-i', str(vid_list),
             '-i', str(orig_vid),
-            '-map', '0:v', '-map', '1:a',
+            '-map', '0:v', '-map', '1:a?',
             '-vcodec', 'copy',
             '-acodec', 'libopus', '-b:a', '96k',
             '-map_metadata', '-1',
