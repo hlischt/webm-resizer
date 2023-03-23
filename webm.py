@@ -154,7 +154,7 @@ def main_func():
               file=sys.stderr, end='')
         ffmpeg_dump_frames(vid_path, temp / '%05d.png', vinfo['fps'])
         print(' Done.', file=sys.stderr)
-        pngs = sorted(list(temp.glob('./*.png')))
+        pngs = sorted(temp.glob('./*.png'))
         webms = []
         concat_list = ''
         print('Converting PNG images to webm...',
