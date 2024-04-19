@@ -7,6 +7,7 @@ import subprocess
 import tempfile
 import datetime
 import shutil
+import argparse
 import webm_functions
 
 
@@ -83,7 +84,8 @@ def quote_file(path: pathlib.Path) -> str:
     return "'" + str(path.resolve()).replace("'", r"'\''") + "'"
 
 
-def ffmpeg_concat(vid_list: pathlib.Path, orig_vid: pathlib.Path):
+def ffmpeg_concat(vid_list: pathlib.Path, orig_vid: pathlib.Path,
+                  output_vid: pathlib.Path):
     try:
         subprocess.run([
             'ffmpeg', '-hide_banner', '-f', 'concat',
@@ -94,7 +96,7 @@ def ffmpeg_concat(vid_list: pathlib.Path, orig_vid: pathlib.Path):
             '-vcodec', 'copy',
             '-acodec', 'libopus', '-b:a', '96k',
             '-map_metadata', '-1',
-            str(orig_vid.with_suffix('.out.webm')),
+            str(output_vid),
         ], check=True)
     except subprocess.CalledProcessError as e:
         raise ChildProcessError('ffmpeg returned an error') from e
@@ -112,14 +114,22 @@ def check_ff():
         sys.exit(f'Error: {" and ".join(names)} not found')
 
 
-def check_infile(path: str) -> pathlib.Path:
-    vid_path = pathlib.Path(path)
+def check_infile(inpath: str,
+                 outpath) -> tuple[pathlib.Path, pathlib.Path]:
+    vid_path = pathlib.Path(inpath)
     if not vid_path.is_file():
         sys.exit(f'Error: {str(vid_path)} is not a valid file')
-    return vid_path
+    if outpath is None:
+        out = vid_path.with_suffix('.out.webm')
+    else:
+        out = pathlib.Path(outpath)
+    if out == vid_path or not out.parent.is_dir():
+        sys.exit(f"Error: Can't write to {str(out)}")
+    return vid_path, out
 
 
-def process_video(vid_path: pathlib.Path, temp_dir: str) -> None:
+def process_video(vid_path: pathlib.Path, out_path: pathlib.Path,
+                  temp_dir: str) -> None:
     print(f'Getting resolution/framerate from {vid_path}...', file=sys.stderr)
     temp = pathlib.Path(temp_dir)
     vinfo = vid_info(vid_path)
@@ -143,22 +153,32 @@ def process_video(vid_path: pathlib.Path, temp_dir: str) -> None:
     print('', file=sys.stderr)
     with open(temp / 'list.txt', 'w', encoding='utf-8') as f:
         f.write(concat_list)
-    ffmpeg_concat(temp / 'list.txt', vid_path)
+    ffmpeg_concat(temp / 'list.txt', vid_path, out_path)
     print('Deleting temporary files...', file=sys.stderr)
     for i in webms:
         i.unlink()
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+         description='Create a WebM video with a dynamic resolution.',
+    )
+    parser.add_argument('input_file', help='Video to convert.')
+    parser.add_argument('output_file', nargs='?',
+                        default=None,
+                        help='Path to the new video file.')
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
     random.seed(datetime.datetime.now().timestamp())
     check_ff()
-    try:
-        vid_path = check_infile(sys.argv[1])
-    except IndexError:
-        sys.exit('Error: No file provided')
+    vid_path, out_path = check_infile(args.input_file, args.output_file)
+    print(f'vid_path = {vid_path}, out_path = {out_path}')
     with tempfile.TemporaryDirectory() as td:
-        process_video(vid_path, td)
-    print(f'Successfully encoded {vid_path.with_suffix(".out.webm")}',
+        process_video(vid_path, out_path, td)
+    print(f'Successfully encoded {out_path}',
           file=sys.stderr)
 
 
