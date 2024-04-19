@@ -7,37 +7,7 @@ import subprocess
 import tempfile
 import datetime
 import shutil
-
-
-def dummy(frame_number: int, res: int) -> int:
-    '''Returns the original resolution, unchanged.'''
-    return res
-
-
-def cyclic_resolution(frame_number: int, res: int) -> int:
-    return math.ceil((res/4) * math.cos(frame_number / math.pi) + (res/4)*3)
-
-
-def random_res(frame_number: int, res: int) -> int:
-    return random.randint(2, 320)
-
-
-def random_slow(frame_number: int, res: int) -> int:
-    random.seed((frame_number//4) * res)
-    return random.randint(2, 320)
-
-
-def random_closure(minimum: int, maximum: int, hold: int):
-    '''Create a random function that changes every `hold` number of frames.'''
-    def rndm(frame_number: int, res: int) -> int:
-        random.seed((frame_number//hold) * res)
-        return random.randint(minimum, maximum)
-    return rndm
-
-
-def shrink(until: int):
-    return lambda frame_num, res: \
-        math.ceil((until + 1 - frame_num) * res)/(until + 1)
+import webm_functions
 
 
 def ffprobe(path: pathlib.Path) -> dict:
@@ -160,7 +130,7 @@ def process_video(vid_path: pathlib.Path, temp_dir: str) -> None:
     concat_list = ''
     print('Converting PNG images to webm...', file=sys.stderr)
     png_n = len(pngs)
-    shrink_func = shrink(png_n)
+    shrink_func = webm_functions.shrink(png_n)
     for idx, i in enumerate(pngs):
         print('\r\033[0K', end='', file=sys.stderr, flush=True)
         print(f'Processing frame {idx+1} of {png_n}', end='',
