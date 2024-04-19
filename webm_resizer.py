@@ -1,4 +1,3 @@
-import math
 import json
 import random
 import sys
@@ -8,7 +7,7 @@ import tempfile
 import datetime
 import shutil
 import argparse
-import webm_functions
+import functions
 
 
 def ffprobe(path: pathlib.Path) -> dict:
@@ -140,8 +139,8 @@ def process_video(vid_path: pathlib.Path, out_path: pathlib.Path,
     concat_list = ''
     print('Converting PNG images to webm...', file=sys.stderr)
     png_n = len(pngs)
-    h_func = webm_functions.init_func(h_name, png_n)
-    v_func = webm_functions.init_func(v_name, png_n)
+    h_func = functions.init_func(h_name, png_n)
+    v_func = functions.init_func(v_name, png_n)
     for idx, i in enumerate(pngs):
         print('\r\033[0K', end='', file=sys.stderr, flush=True)
         print(f'Processing frame {idx+1} of {png_n}', end='',
@@ -163,7 +162,7 @@ def process_video(vid_path: pathlib.Path, out_path: pathlib.Path,
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Create a WebM video with a dynamic resolution.',
-        epilog='Available functions: ' + ', '.join(webm_functions.func_dict)
+        epilog='Available functions: ' + ', '.join(functions.func_dict)
     )
     parser.add_argument('-x', '--horizontal', metavar='FUNCTION',
                         default='shrink',
@@ -180,9 +179,9 @@ def parse_args():
 
 def main():
     args = parse_args()
-    if args.horizontal not in webm_functions.func_dict:
+    if args.horizontal not in functions.func_dict:
         sys.exit(f'Error: {args.horizontal} is not a defined function')
-    if args.vertical not in webm_functions.func_dict:
+    if args.vertical not in functions.func_dict:
         sys.exit(f'Error: {args.vertical} is not a defined function')
     h_func, v_func = args.horizontal, args.vertical
     random.seed(datetime.datetime.now().timestamp())
