@@ -61,15 +61,15 @@ def ffmpeg_dump_frames(infile: pathlib.Path, outseq: pathlib.Path,
 
 
 def ffmpeg_img2webm(infile: pathlib.Path, res: tuple, fps: str,
-                    iteration: int, func):
+                    iteration: int, h_func, v_func):
     try:
         subprocess.run([
             'ffmpeg', '-hide_banner',
             '-r', fps,
             '-i', str(infile),
             '-an', '-sn', '-dn', '-vf',
-            f'scale={func(iteration, res[0])}:'
-            + f'{func(iteration, res[1])}'
+            f'scale={h_func(iteration, res[0])}:'
+            + f'{v_func(iteration, res[1])}'
             + ':flags=lanczos,setsar=1/1,'
             + f'fps={fps}',
             '-vcodec', 'libvpx-vp9',
@@ -129,7 +129,7 @@ def check_infile(inpath: str,
 
 
 def process_video(vid_path: pathlib.Path, out_path: pathlib.Path,
-                  temp_dir: str) -> None:
+                  temp_dir: str, h_name, v_name) -> None:
     print(f'Getting resolution/framerate from {vid_path}...', file=sys.stderr)
     temp = pathlib.Path(temp_dir)
     vinfo = vid_info(vid_path)
@@ -140,13 +140,14 @@ def process_video(vid_path: pathlib.Path, out_path: pathlib.Path,
     concat_list = ''
     print('Converting PNG images to webm...', file=sys.stderr)
     png_n = len(pngs)
-    shrink_func = webm_functions.shrink(png_n)
+    h_func = webm_functions.init_func(h_name, png_n)
+    v_func = webm_functions.init_func(v_name, png_n)
     for idx, i in enumerate(pngs):
         print('\r\033[0K', end='', file=sys.stderr, flush=True)
         print(f'Processing frame {idx+1} of {png_n}', end='',
               file=sys.stderr, flush=True)
         ffmpeg_img2webm(i, vinfo['res'], vinfo['fps'],
-                        idx, shrink_func)
+                        idx, h_func, v_func)
         i.unlink()
         concat_list += f'file {quote_file(i.with_suffix(".webm"))}\n'
         webms.append(i.with_suffix('.webm'))
@@ -161,8 +162,15 @@ def process_video(vid_path: pathlib.Path, out_path: pathlib.Path,
 
 def parse_args():
     parser = argparse.ArgumentParser(
-         description='Create a WebM video with a dynamic resolution.',
+        description='Create a WebM video with a dynamic resolution.',
+        epilog='Available functions: ' + ', '.join(webm_functions.func_dict)
     )
+    parser.add_argument('-x', '--horizontal', metavar='FUNCTION',
+                        default='shrink',
+                        help='Function to apply to the horizontal axis.')
+    parser.add_argument('-y', '--vertical', metavar='FUNCTION',
+                        default='shrink',
+                        help='Function to apply to the vertical axis.')
     parser.add_argument('input_file', help='Video to convert.')
     parser.add_argument('output_file', nargs='?',
                         default=None,
@@ -172,12 +180,17 @@ def parse_args():
 
 def main():
     args = parse_args()
+    if args.horizontal not in webm_functions.func_dict:
+        sys.exit(f'Error: {args.horizontal} is not a defined function')
+    if args.vertical not in webm_functions.func_dict:
+        sys.exit(f'Error: {args.vertical} is not a defined function')
+    h_func, v_func = args.horizontal, args.vertical
     random.seed(datetime.datetime.now().timestamp())
     check_ff()
     vid_path, out_path = check_infile(args.input_file, args.output_file)
     print(f'vid_path = {vid_path}, out_path = {out_path}')
     with tempfile.TemporaryDirectory() as td:
-        process_video(vid_path, out_path, td)
+        process_video(vid_path, out_path, td, h_func, v_func)
     print(f'Successfully encoded {out_path}',
           file=sys.stderr)
 
