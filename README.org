@@ -28,7 +28,7 @@ def my_func(frame_number: int, resolution: int) -> int
 
 ~frame_number~ starts from 0, and ~resolution~ is defined by the video; it can be either the horizontal or vertical resolution. This function returns the new resolution for the output frame, based on an arbitrary formula determined by the previously mentioned parameters.
 
-An alternative way to write functions is to define a closure that accepts an ~int~ representing the total number of frames in the video, and returning another function with the previously mentioned signature. This is useful for transformations that depend on the length of the video, like gradually shrinking it until the last frame is a pixel-sized.
+An alternative way to write functions is to define a closure that accepts an ~int~ representing the total number of frames in the video, and returning another function with the previously mentioned signature. This is useful for transformations that depend on the length of the video, like gradually shrinking it until the last frame is pixel-sized.
 
 If it makes more sense, here's the function signatures as type annotations:
 

@@ -1,12 +1,12 @@
-import json
-import random
-import sys
-import pathlib
-import subprocess
-import tempfile
-import datetime
-import shutil
 import argparse
+import datetime
+import json
+import pathlib
+import random
+import shutil
+import subprocess
+import sys
+import tempfile
 import functions
 
 
