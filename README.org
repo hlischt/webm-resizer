@@ -17,13 +17,13 @@ In order to be more robust, some codecs allow a data stream to change attributes
 3. Concatenate each frame-length video into a new WebM file with the same length as the input file. There is no re-encoding here, so each frame keeps its resolution.
    - After everything is done, delete the temporary files.
 
-Creating a new video per frame involves making everything a keyframe for their own individual video files, so the resized video will be larger in size than the input file. I don't know of a way to bypass this, other than maybe reduce the bitrate of each frame file.
+Creating a new video per frame involves making everything a keyframe for their own individual video files, so the resized video will be larger in size than the input file. I don't know a way to bypass this, other than to maybe reduce the bitrate of each frame file.
 
 *** Resize functions
-In order to resize one of the dimensions of a frame, this script uses functions like this:
+In order to resize one of the dimensions of a frame, this script uses functions like the following:
 
 #+BEGIN_SRC python
-def my_func(frame_number: int, resolution: int) -> int
+def my_func(frame_number: int, resolution: int) -> int:
 #+END_SRC
 
 ~frame_number~ starts from 0, and ~resolution~ is defined by the video; it can be either the horizontal or vertical resolution. This function returns the new resolution for the output frame, based on an arbitrary formula determined by the previously mentioned parameters.
@@ -41,7 +41,7 @@ resolution_closure  = Callable[[frame], resolution_function]
 #+END_SRC
 
 ** Requirements
-- Python 3
+- Python 3.
 - =ffmpeg= and =ffprobe= in =PATH=.
 
 ** License
