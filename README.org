@@ -1,0 +1,46 @@
+* WebM Dynamic Resizer
+Create a WebM video with a dynamic resolution.
+
+** Usage
+Run the script like this:
+
+#+BEGIN_SRC bash
+python3 webm_resizer.py [-x shrink] [-y random] input_video.mp4 [output.webm]
+#+END_SRC
+
+The only required argument is the input video. If there's no output path, the resized video will be saved in the same directory as the input video, with an "out.webm" extension. ~-x~ and ~-y~ are flags for which function to apply to the horizontal and vertical dimension, respectively. To see the list of available functions, run the script with the ~-h~ flag.
+
+** How it works
+In order to be more robust, some codecs allow a data stream to change attributes mid-playback. This script works in three steps:
+1. Read a video file and dump all the frames as individual PNG images in a temporary directory.
+2. Encode the image files as individual videos with a length of a single frame, using the VP9 codec. In this step, each frame is resized to an arbitrary resolution.
+3. Concatenate each frame-length video into a new WebM file with the same length as the input file. There is no re-encoding here, so each frame keeps its resolution.
+   - After everything is done, delete the temporary files.
+
+Creating a new video per frame involves making everything a keyframe for their own individual video files, so the resized video will be larger in size than the input file. I don't know of a way to bypass this, other than maybe reduce the bitrate of each frame file.
+
+*** Resize functions
+In order to resize one of the dimensions of a frame, this script uses functions like this:
+
+#+BEGIN_SRC python
+def my_func(frame_number: int, resolution: int) -> int
+#+END_SRC
+
+~frame_number~ starts from 0, and ~resolution~ is defined by the video; it can be either the horizontal or vertical resolution. This function returns the new resolution for the output frame, based on an arbitrary formula determined by the previously mentioned parameters.
+
+An alternative way to write functions is to define a closure that accepts an ~int~ representing the total number of frames in the video, and returning another function with the previously mentioned signature. This is useful for transformations that depend on the length of the video, like gradually shrinking it until the last frame is a pixel-sized.
+
+If it makes more sense, here's the function signatures as type annotations:
+
+#+BEGIN_SRC python
+from typing import Callable
+resolution = int
+frame = int
+resolution_function = Callable[[frame, resolution], resolution]
+resolution_closure  = Callable[[frame], resolution_function]
+#+END_SRC
+
+** Requirements
+- Python 3
+- =ffmpeg= and =ffprobe= in =PATH=.
+
