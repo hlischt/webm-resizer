@@ -44,3 +44,5 @@ resolution_closure  = Callable[[frame], resolution_function]
 - Python 3
 - =ffmpeg= and =ffprobe= in =PATH=.
 
+** License
+This project is licensed under the public-domain-equivalent [[https://opensource.org/license/0bsd/][BSD Zero Clause License]].
